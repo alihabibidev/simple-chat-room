@@ -58,6 +58,12 @@ structure.forEach((namespace)=>{
 
         })
 
+        nsSocket.on('disconnecting', ()=>{
+            let lastRoomName = Array.from(nsSocket.rooms)[1];
+            nsSocket.leave(lastRoomName);
+            updateOnlineUsers(namespace.endpoint, lastRoomName);
+        })
+
     })
 
 })
