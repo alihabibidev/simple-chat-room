@@ -6,28 +6,15 @@ const app = express();
 
 app.use(express.static(__dirname + '/public'));
 
-const httpServer = app.listen(3000,()=>{
-    console.log("serverrrrrrrrrrr ok");
-});
+const httpServer = app.listen(3000);
 const io = socketIo(httpServer, {
     cors : {
         origin : '*'
     }
 });
 
-
-// io.of('/').on('connection', (socket)=>{
-//     let nsData = structure.map((namespace)=>{
-//         return {
-//             title : namespace.title,
-//             endpoint : namespace.endpoint
-//         }
-//     });
-
-//     socket.emit('namespaceLoad', nsData);
-// });
-
 io.on('connection', (socket)=>{
+
     let nsData = structure.map((namespace)=>{
         return {
             title : namespace.title,
@@ -39,9 +26,9 @@ io.on('connection', (socket)=>{
 });
 
 structure.forEach((namespace)=>{
-
     io.of(namespace.endpoint).on('connection', (nsSocket)=>{
-
+        
+        nsSocket.username = nsSocket.handshake.query.username;
         nsSocket.emit('roomLoad', namespace.rooms);
 
         nsSocket.on('joinRoom', (roomName)=>{
@@ -58,6 +45,22 @@ structure.forEach((namespace)=>{
 
         })
 
+        nsSocket.on('newMessageFromClient', (message)=>{
+
+            let currentRoomName = Array.from(nsSocket.rooms)[1];
+            let messageStruct = {
+                username : nsSocket.username,
+                avatar : 'avatar.png',
+                text : message,
+                time : new Date().toLocaleString()
+            }
+            let room = namespace.rooms.find((room)=>{ return room.name === currentRoomName });
+            room.addMessage(messageStruct);
+
+            io.of(namespace.endpoint).in(room.name).emit('newMessageFromServer', messageStruct);
+
+        })
+
         nsSocket.on('disconnecting', ()=>{
             let lastRoomName = Array.from(nsSocket.rooms)[1];
             nsSocket.leave(lastRoomName);
@@ -65,9 +68,7 @@ structure.forEach((namespace)=>{
         })
 
     })
-
 })
-
 
 async function updateOnlineUsers(endpoint, roomName){
     let onlineUsers = await io.of(endpoint).in(roomName).allSockets()
