@@ -3,7 +3,11 @@ function joinNamespace(endpoint){
     if(nsSocket){
         nsSocket.close();
     }
-    nsSocket = io(`http://localhost:3000${endpoint}`);
+    nsSocket = io(`http://localhost:3000${endpoint}`, {
+        query : {
+            username
+        }
+    });
 
     nsSocket.on('roomLoad', (roomData)=>{
         $('.roomsList').html('');
