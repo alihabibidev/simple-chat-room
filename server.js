@@ -12,3 +12,25 @@ const io = socketIo(httpServer, {
         origin : '*'
     }
 });
+
+
+io.on('connection', (socket)=>{
+    let nsData = structure.map((namespace)=>{
+        return {
+            title : namespace.title,
+            endpoint : namespace.endpoint
+        }
+    });
+
+    socket.emit('namespaceLoad', nsData);
+});
+
+structure.forEach((namespace)=>{
+
+    io.of(namespace.endpoint).on('connection', (socket)=>{
+
+        socket.emit('roomLoad', namespace.rooms);
+
+    })
+
+})
