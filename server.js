@@ -47,3 +47,9 @@ structure.forEach((namespace)=>{
     })
 
 })
+
+
+async function updateOnlineUsers(endpoint, roomName){
+    let onlineUsers = await io.of(endpoint).in(roomName).allSockets()
+    io.of(endpoint).in(roomName).emit('updateOnlineUsers', Array.from(onlineUsers).length);
+}
