@@ -40,9 +40,23 @@ io.on('connection', (socket)=>{
 
 structure.forEach((namespace)=>{
 
-    io.of(namespace.endpoint).on('connection', (socket)=>{
+    io.of(namespace.endpoint).on('connection', (nsSocket)=>{
 
-        socket.emit('roomLoad', namespace.rooms);
+        nsSocket.emit('roomLoad', namespace.rooms);
+
+        nsSocket.on('joinRoom', (roomName)=>{
+
+            let lastRoomName = Array.from(nsSocket.rooms)[1];
+            nsSocket.leave(lastRoomName);
+            updateOnlineUsers(namespace.endpoint, lastRoomName);
+
+            nsSocket.join(roomName);
+            updateOnlineUsers(namespace.endpoint, roomName);
+
+            let roomInfo = namespace.rooms.find((room)=>{ return room.name === roomName });
+            nsSocket.emit('roomInformation', roomInfo);
+
+        })
 
     })
 
